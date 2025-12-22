@@ -1,0 +1,7 @@
+[workspace]
+resolver = "3"
+members = ["crates/common-structs", "crates/ytapi2"]
+
+[workspace.dependencies]
+common-structs = { path = "crates/common-structs" }
+ytapi2 = { path = "crates/ytapi2" }
