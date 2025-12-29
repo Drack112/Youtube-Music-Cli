@@ -1,0 +1,10 @@
+[package]
+name = "ytermusic"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ytapi2.workspace = true
+
+#  --- Threading & Sync ---
+tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
