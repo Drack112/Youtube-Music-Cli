@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/common-structs", "crates/ytapi2"]
+members = ["crates/common-structs", "crates/database", "crates/ytapi2", "crates/ytermusic"]
 
 [workspace.dependencies]
 common-structs = { path = "crates/common-structs" }

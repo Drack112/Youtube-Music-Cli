@@ -1,0 +1,10 @@
+[package]
+name = "database"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ytapi2.workspace = true
+varuint = "0.7.1"
+log = "*"
+serde_json = "1.0.148"
