@@ -10,8 +10,11 @@ use sha1::{Digest, Sha1};
 
 use crate::{
     endpoint::Endpoint,
-    json_extractor::{Continuation, from_json, get_continuation, get_playlist},
-    types::{Result, YoutubeMusicError, YoutubeMusicPlaylistRef},
+    json_extractor::{
+        Continuation, extract_playlist_info, from_json, get_continuation, get_playlist, get_video,
+        get_video_from_album,
+    },
+    types::{Result, YoutubeMusicError, YoutubeMusicPlaylistRef, YoutubeMusicVideoRef},
     utils::StringUtils,
 };
 
@@ -345,4 +348,25 @@ impl YoutubeMusicInstance {
         trace!("Computed SAPI Hash{timestamp}_{hex}");
         format!("{timestamp}_{hex}")
     }
+}
+
+fn parse_playlist(playlist_json: &Value) -> Result<Vec<YoutubeMusicVideoRef>> {
+    let mut videos = from_json(playlist_json, get_video)?;
+    let info = extract_playlist_info(playlist_json);
+
+    for mut video in from_json(playlist_json, get_video_from_album)? {
+        if videos.iter().any(|x| x.video_id == video.video_id) {
+            continue;
+        }
+        if let Some((title, artists)) = info.as_ref() {
+            if video.album.is_empty() {
+                video.album = title.to_string();
+            }
+            if video.author.is_empty() {
+                video.author = artists.to_string();
+            }
+        }
+        videos.push(video);
+    }
+    Ok(videos)
 }
