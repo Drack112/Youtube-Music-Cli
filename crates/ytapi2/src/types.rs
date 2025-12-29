@@ -1,8 +1,7 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::{fmt::Display, string::FromUtf8Error};
 
-pub type Result<T> = std::result::Result<T, YoutubeMusicError>;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug)]
 pub enum YoutubeMusicError {
@@ -20,6 +19,8 @@ pub enum YoutubeMusicError {
     YoutubeMusicError(Value),
     InvalidHeaders,
 }
+
+pub type Result<T> = std::result::Result<T, YoutubeMusicError>;
 
 #[derive(Debug, Clone, PartialOrd, Eq, Ord, PartialEq, Hash, Serialize, Deserialize)]
 pub struct YoutubeMusicVideoRef {
@@ -45,7 +46,7 @@ pub struct YoutubeMusicPlaylistRef {
 
 #[derive(Debug, Clone, PartialOrd, Eq, Ord, PartialEq, Hash)]
 pub struct SearchResults {
-    pub videos: Vec<YoutubeMusicVideoRef>,
+    pub videos: Vec<YoutubeMusicPlaylistRef>,
     pub playlists: Vec<YoutubeMusicPlaylistRef>,
 }
 

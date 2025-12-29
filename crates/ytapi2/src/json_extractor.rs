@@ -1,7 +1,7 @@
-use reqwest::get;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::types::{Continuation, YoutubeMusicPlaylistRef, YoutubeMusicVideoRef};
+use crate::types::{YoutubeMusicPlaylistRef, YoutubeMusicVideoRef};
 
 /// Applies recursively the `transformer` function to the given json value
 /// and returns the transformed values.
@@ -38,6 +38,8 @@ pub(crate) fn from_json<T: PartialEq>(
     Ok(playlists)
 }
 
+/// Tries to extract a playlist from a json value.
+/// Quite flexible to reduce odds of API change breaking this.
 pub(crate) fn get_playlist(value: &Value) -> Option<YoutubeMusicPlaylistRef> {
     let object = value.as_object()?;
     let title_text = get_text(object.get("title")?, true, false)?;
@@ -49,7 +51,6 @@ pub(crate) fn get_playlist(value: &Value) -> Option<YoutubeMusicPlaylistRef> {
         .and_then(|x| x.get("browseEndpoint"))
         .and_then(|x| x.get("browseId"))
         .and_then(Value::as_str)?;
-
     Some(YoutubeMusicPlaylistRef {
         name: title_text,
         subtitle: subtitle.unwrap_or_default(),
@@ -57,17 +58,21 @@ pub(crate) fn get_playlist(value: &Value) -> Option<YoutubeMusicPlaylistRef> {
     })
 }
 
+#[derive(Debug, Clone, PartialOrd, Eq, Ord, PartialEq, Hash, Serialize, Deserialize)]
+pub struct Continuation {
+    pub(crate) continuation: String,
+    pub(crate) click_tracking_params: String,
+}
+
 pub fn get_continuation(value: &Value) -> Option<Continuation> {
     let continuation = value
         .get("nextContinuationData")
         .and_then(|x| x.get("continuation"))
         .and_then(Value::as_str)?;
-
     let click_tracking_params = value
         .get("nextContinuationData")
         .and_then(|x| x.get("clickTrackingParams"))
         .and_then(Value::as_str)?;
-
     Some(Continuation {
         continuation: continuation.to_string(),
         click_tracking_params: click_tracking_params.to_string(),
@@ -80,7 +85,6 @@ pub fn get_playlist_search(value: &Value) -> Option<YoutubeMusicPlaylistRef> {
         .and_then(|x| x.get("browseEndpoint"))
         .and_then(|x| x.get("browseId"))
         .and_then(Value::as_str)?;
-
     let titles: Vec<String> = value
         .get("flexColumns")?
         .as_array()?
@@ -91,7 +95,6 @@ pub fn get_playlist_search(value: &Value) -> Option<YoutubeMusicPlaylistRef> {
                 .and_then(|x| get_text(x, false, false))
         })
         .collect();
-
     Some(YoutubeMusicPlaylistRef {
         name: titles.first()?.clone(),
         subtitle: titles.get(1)?.clone(),
@@ -110,7 +113,6 @@ pub fn extract_playlist_info(value: &Value) -> Option<(String, String)> {
         .flat_map(|x| get_text(x, false, false))
         .filter(|x| x != " • ")
         .collect::<Vec<String>>();
-
     Some((title, subtitles.get(1)?.clone()))
 }
 
@@ -129,7 +131,6 @@ pub fn get_video_from_album(value: &Value) -> Option<YoutubeMusicVideoRef> {
                 .and_then(|x| get_text(x, false, false))
         })
         .collect();
-
     Some(YoutubeMusicVideoRef {
         title: title.first()?.clone(),
         author: String::new(),

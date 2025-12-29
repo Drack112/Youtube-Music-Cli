@@ -1,21 +1,21 @@
-use core::error;
-use std::fmt::format;
-use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use log::{debug, error, trace};
 use reqwest::header::HeaderMap;
 use serde_json::Value;
 use sha1::{Digest, Sha1};
 
-use crate::endpoint::Endpoint;
-use crate::json_extractor::{from_json, get_continuation, get_playlist};
-use crate::types::{
-    Continuation, Result, SearchResults, YoutubeMusicError, YoutubeMusicPlaylistRef,
+use crate::{
+    endpoint::Endpoint,
+    json_extractor::{Continuation, from_json, get_continuation, get_playlist},
+    types::{Result, YoutubeMusicError, YoutubeMusicPlaylistRef},
+    utils::StringUtils,
 };
-use crate::utils::StringUtils;
 
-const YTM_DOMAIN: &str = "https://music.youtube.com";
+const YT_DOMAIN: &str = "https://music.youtube.com";
 
 #[derive(Debug)]
 pub struct YoutubeMusicInstance {
@@ -38,7 +38,7 @@ impl YoutubeMusicInstance {
         trace!("Fetching YoutubeMusic homepage");
 
         let response: String = rest_client
-            .get(YTM_DOMAIN)
+            .get(YT_DOMAIN)
             .headers(headers.clone())
             .send()
             .await
@@ -46,8 +46,6 @@ impl YoutubeMusicInstance {
             .text()
             .await
             .map_err(YoutubeMusicError::RequestError)?;
-
-        trace!("Fetched");
 
         if response.contains("<base href=\"https://accounts.google.com/v3/signin/\">")
             || response.contains("<base href=\"https://consent.youtube.com/\"")
@@ -61,19 +59,19 @@ impl YoutubeMusicInstance {
             .get("Cookie")
             .ok_or(YoutubeMusicError::NoCookieAttribute)?;
 
-        let cookies_bytes = cookies.as_bytes();
-        let cookies = String::from_utf8(cookies_bytes.to_vec())
+        let cookie_bytes = cookies.as_bytes();
+        let cookies = String::from_utf8(cookie_bytes.to_vec())
             .map_err(YoutubeMusicError::InvalidCookie)?
             .to_string();
 
         let sapisid = cookies
             .between("SAPISID=", ";")
             .ok_or_else(|| YoutubeMusicError::NoSapsidInCookie)?;
-        trace!("Cookies parsed! SAPISID: {}", sapisid);
 
         let innertube_api_key = response
             .between("INNERTUBE_API_KEY\":\"", "\"")
             .ok_or_else(|| YoutubeMusicError::CantFindInnerTubeApiKey(response.to_string()))?;
+
         trace!("Innertube API key: {}", innertube_api_key);
 
         let client_version = response
@@ -81,9 +79,8 @@ impl YoutubeMusicInstance {
             .ok_or_else(|| {
                 YoutubeMusicError::CantFindInnerTubeClientVersion(response.to_string())
             })?;
-        trace!("Innertube client version: {}", client_version);
 
-        // New file for brand accounts, maybe put it in config or headers.txt is better but more complex.
+        trace!("Innertube client version: {}", client_version);
         trace!("account id {:?}", account_id);
 
         Ok(Self {
@@ -135,6 +132,7 @@ impl YoutubeMusicInstance {
             .parent()
             .unwrap_or(Path::new("../"))
             .join("account_id.txt");
+
         let account_id = match tokio::fs::read_to_string(account_path).await {
             Ok(mut id) => {
                 if id.ends_with("\n") {
@@ -336,7 +334,7 @@ impl YoutubeMusicInstance {
         let timestamp = since_the_epoch.as_secs();
 
         let mut hasher = Sha1::new();
-        hasher.update(format!("{timestamp} {} {YTM_DOMAIN}", self.sapisid));
+        hasher.update(format!("{timestamp} {} {YT_DOMAIN}", self.sapisid));
         let result = hasher.finalize();
         let mut hex = String::with_capacity(40);
 
