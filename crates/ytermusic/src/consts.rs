@@ -9,7 +9,7 @@ pub const INTRODUCTION: &str = r#"Usage: ytermusic [options]
 
 YTerMusic is a TUI based Youtube Music Player that aims to be as fast and simple as possible.
 In order to get your music, create a file "headers.txt" in the config folder, and copy the Cookie and User-Agent from request header of the music.youtube.com html document "/" page.
-More info at: https://github.com/ccgauche/ytermusic
+More info at: https://github.com/Drack112/Youtube-Music-Cli
 
 Options:
         -h or --help        Show this menu
@@ -44,3 +44,13 @@ pub static CACHE_DIR: Lazy<PathBuf> = Lazy::new(|| {
     warn!("Failed to get cache dir! Defaulting to './data'");
     PathBuf::from("./data")
 });
+
+pub const HEADER_TUTORIAL: &str = r#"To configure the YTerMusic:
+1. Open the YouTube Music website in your browser
+2. Open the developer tools (F12)
+3. Go to the Network tab
+4. Go to https://music.youtube.com
+5. Copy the `cookie` header from the associated request
+6. Paste it in the `headers.txt` file in format `Cookie: <cookie>`
+7. On a newline of `headers.txt` add a user-agent in format `User-Agent: <Mozilla/5.0 (Example)>
+8. Restart YterMusic"#;

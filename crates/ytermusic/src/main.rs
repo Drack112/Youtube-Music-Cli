@@ -5,21 +5,27 @@ use std::{
     sync::RwLock,
 };
 
+use flume::{Receiver, Sender};
 use log::{error, info};
 use once_cell::sync::Lazy;
+use tokio::select;
 
 use crate::{
-    consts::{CACHE_DIR, INTRODUCTION},
+    consts::{CACHE_DIR, HEADER_TUTORIAL, INTRODUCTION},
     database::DATABASE,
-    shutdown::shutdown,
+    shutdown::{ShutdownSignal, shutdown},
+    structures::perfomance::STARTUP_TIME,
     systems::logger::{get_log_file_path, init},
+    term::ManagerMessage,
     utils::get_project_dirs,
 };
 
 mod consts;
 mod database;
 mod shutdown;
+mod structures;
 mod systems;
+mod term;
 mod utils;
 
 static COOKIES: Lazy<RwLock<Option<String>>> = Lazy::new(|| RwLock::new(None));
@@ -155,7 +161,6 @@ fn main() {
                     error!("Please make sure you have cookies in your browser");
                     return;
                 }
-                return;
             }
             e => {
                 println!("Unknown argument `{e}`");
@@ -176,4 +181,55 @@ fn main() {
         error!("{e}");
         shutdown();
     }));
+
+    app_start();
+}
+
+pub fn try_get_cookies() -> Option<String> {
+    let cookies = COOKIES.read().unwrap();
+    cookies.clone()
+}
+
+async fn app_start_main(updater_r: Receiver<ManagerMessage>, updater_s: Sender<ManagerMessage>) {
+    STARTUP_TIME.log("Init");
+
+    std::fs::create_dir_all(CACHE_DIR.join("downloads")).unwrap();
+
+    if try_get_cookies().is_none() {
+        if let Err((error, filepath)) = get_header_file() {
+            println!("Can't read or find `{}`", filepath.display());
+            println!("Error: {error}");
+            println!("{HEADER_TUTORIAL}");
+            // prevent console window closing on windows, does nothing on linux
+            std::io::stdin().read_line(&mut String::new()).unwrap();
+            return;
+        }
+    }
+
+    STARTUP_TIME.log("Startup");
+}
+
+fn app_start() {
+    let (updater_s, updater_r) = flume::unbounded::<ManagerMessage>();
+    let updater_s_c = updater_s.clone();
+    ctrlc::set_handler(move || {
+        info!("Ctrl-C received");
+        shutdown();
+    })
+    .expect("Error setting Ctrl-C handler");
+
+    std::thread::spawn(move || {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .expect("Failed to build runtime")
+            .block_on(async move {
+                select! {
+                    _ = app_start_main(updater_r, updater_s) => {},
+                    _ = ShutdownSignal => {},
+                };
+            });
+        info!("Runtime closed");
+    });
+    //run_window_handler(&updater_s_c);
 }

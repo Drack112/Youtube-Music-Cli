@@ -20,3 +20,5 @@ directories = "6.0.0"
 
 # -- Cookies auto retreival --
 rookie = "0.5.6"
+
+ctrlc = "3.5.1"
