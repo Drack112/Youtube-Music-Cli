@@ -11,12 +11,14 @@ use once_cell::sync::Lazy;
 use crate::{
     consts::{CACHE_DIR, INTRODUCTION},
     database::DATABASE,
+    shutdown::shutdown,
     systems::logger::{get_log_file_path, init},
     utils::get_project_dirs,
 };
 
 mod consts;
 mod database;
+mod shutdown;
 mod systems;
 mod utils;
 
@@ -172,5 +174,6 @@ fn main() {
     panic::set_hook(Box::new(|e| {
         println!("{e}");
         error!("{e}");
+        shutdown();
     }));
 }
