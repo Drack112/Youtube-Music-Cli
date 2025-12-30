@@ -5,6 +5,18 @@ edition = "2024"
 
 [dependencies]
 ytapi2.workspace = true
+database.workspace = true
 
 #  --- Threading & Sync ---
+flume = "0.12.0"
 tokio = { version = "1.48.0", features = ["rt-multi-thread"] }
+once_cell = "1.21.3"
+
+#  --- Logging ---
+log = "0.4.29"
+
+#  --- Encoding ---
+directories = "6.0.0"
+
+# -- Cookies auto retreival --
+rookie = "0.5.6"
