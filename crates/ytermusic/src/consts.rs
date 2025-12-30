@@ -1,3 +1,10 @@
+use std::path::PathBuf;
+
+use log::warn;
+use once_cell::sync::Lazy;
+
+use crate::utils::get_project_dirs;
+
 pub const INTRODUCTION: &str = r#"Usage: ytermusic [options]
 
 YTerMusic is a TUI based Youtube Music Player that aims to be as fast and simple as possible.
@@ -28,3 +35,12 @@ Shortcuts:
         ESC                       exit the current menu
         CTRL + C or CTRL + D      quit
 "#;
+
+pub static CACHE_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    let pdir = get_project_dirs();
+    if let Some(dir) = pdir {
+        return dir.cache_dir().to_path_buf();
+    }
+    warn!("Failed to get cache dir! Defaulting to './data'");
+    PathBuf::from("./data")
+});
