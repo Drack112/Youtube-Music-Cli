@@ -14,7 +14,7 @@ use crate::{
     consts::{CACHE_DIR, HEADER_TUTORIAL, INTRODUCTION},
     database::DATABASE,
     shutdown::{ShutdownSignal, shutdown},
-    structures::perfomance::STARTUP_TIME,
+    structures::{media::run_window_handler, perfomance::STARTUP_TIME},
     systems::logger::{get_log_file_path, init},
     term::ManagerMessage,
     utils::get_project_dirs,
@@ -231,5 +231,5 @@ fn app_start() {
             });
         info!("Runtime closed");
     });
-    //run_window_handler(&updater_s_c);
+    run_window_handler(&updater_s_c);
 }
