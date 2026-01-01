@@ -22,6 +22,7 @@ use crate::{
 
 mod consts;
 mod database;
+mod errors;
 mod shutdown;
 mod structures;
 mod systems;
