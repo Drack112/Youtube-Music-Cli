@@ -2,6 +2,24 @@ use std::time::Instant;
 
 use once_cell::sync::Lazy;
 
+pub struct PerformanceGuard<'a> {
+    name: &'a str,
+    start: Performance,
+}
+
+impl<'a> PerformanceGuard<'a> {
+    pub fn new(name: &'a str) -> Self {
+        Self {
+            name,
+            start: Performance::new(),
+        }
+    }
+}
+
+pub fn guard<'a>(name: &'a str) -> PerformanceGuard<'a> {
+    PerformanceGuard::new(name)
+}
+
 pub struct Performance {
     pub initial: Instant,
 }

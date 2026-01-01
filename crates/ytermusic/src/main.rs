@@ -26,8 +26,21 @@ mod errors;
 mod shutdown;
 mod structures;
 mod systems;
+mod tasks;
 mod term;
 mod utils;
+
+fn run_service<T>(future: T) -> tokio::task::JoinHandle<()>
+where
+    T: Future + Send + 'static,
+{
+    tokio::task::spawn(async move {
+        select! {
+            _  = future => {},
+            _ = ShutdownSignal => {},
+        }
+    })
+}
 
 static COOKIES: Lazy<RwLock<Option<String>>> = Lazy::new(|| RwLock::new(None));
 
@@ -208,6 +221,7 @@ async fn app_start_main(updater_r: Receiver<ManagerMessage>, updater_s: Sender<M
     }
 
     STARTUP_TIME.log("Startup");
+    tasks::clean::spawn_clean_task();
 }
 
 fn app_start() {
